@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Launcher + Social Suite (WASM, Chat, Shop, Admin)</title>
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Boxicons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <style>
+    /* ===== Custom Utilities ===== */
+    :root { --card: 255 255 255; --muted: 243 244 246; --ring: 99 102 241; }
+    .card { background: rgb(var(--card)); border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,.06); }
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,.7); }
+    .scroll-smooth { scroll-behavior: smooth; }
+    .scroll-area { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+    .scroll-area::-webkit-scrollbar { height: 8px; width: 8px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .ring-focus:focus { box-shadow: 0 0 0 3px rgba(var(--ring),.35); outline: none; }
+    .btn { @apply px-4 py-2 rounded-2xl font-medium border border-slate-200 hover:bg-slate-50 transition; }
+    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-600; }
+    .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100; }
+    .hidden-el { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+  <!-- ================================ -->
+  <!-- HTML SECTION: App Shell & Layout -->
+  <!-- ================================ -->
+  <div id="app" class="min-h-screen grid grid-cols-12">
+    <!-- Sidebar -->
+    <aside class="col-span-12 md:col-span-3 lg:col-span-2 p-4 space-y-4">
+      <div class="card p-4 flex items-center gap-3">
+        <i class='bx bxs-rocket text-3xl text-indigo-600'></i>
+        <div>
+          <h1 class="text-lg font-bold">Your Launcher</h1>
+          <p class="text-xs text-slate-500">WASM • Chat • Shop</p>
+        </div>
+      </div>
+      <nav class="card p-2 divide-y divide-slate-100">
+        <a href="#dashboard" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-dashboard'></i>Dashboard</a>
+        <a href="#launcher" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bx-play-circle'></i>Launcher</a>
+        <a href="#chat" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-chat'></i>Chat</a>
+        <a href="#friends" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-user-plus'></i>Friends</a>
+        <a href="#news" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-news'></i>News</a>
+        <a href="#store" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-cart'></i>Store</a>
+        <a href="#downloads" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-download'></i>Downloads</a>
+        <a href="#profile" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-user-circle'></i>Profile</a>
+        <a href="#support" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-help-circle'></i>Support</a>
+        <a href="#forums" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-conversation'></i>Forums</a>
+        <a href="#admin" id="adminLink" class="hidden-el flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl"><i class='bx bxs-shield'></i>Admin</a>
+      </nav>
+      <div class="card p-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <img id="userAvatar" class="h-8 w-8 rounded-full" src="https://placehold.co/64x64" alt="avatar"/>
+          <div>
+            <div id="welcomeName" class="text-sm font-semibold">Welcome, Guest</div>
+            <div id="presenceDot" class="badge"><span class="h-2 w-2 rounded-full bg-slate-400 inline-block"></span><span id="presenceText">offline</span></div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button id="signInBtn" class="btn">Sign in</button>
+          <button id="signOutBtn" class="btn hidden-el">Sign out</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="col-span-12 md:col-span-9 lg:col-span-10 p-4 space-y-8">
+      <!-- Dashboard -->
+      <section id="dashboard" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-dashboard'></i> Dashboard</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card p-4">
+            <div class="text-sm text-slate-500">Account</div>
+            <div id="accountRole" class="text-xl font-semibold">role: guest</div>
+          </div>
+          <div class="card p-4">
+            <div class="text-sm text-slate-500">Friends</div>
+            <div id="statsFriends" class="text-xl font-semibold">0</div>
+          </div>
+          <div class="card p-4">
+            <div class="text-sm text-slate-500">Unread</div>
+            <div id="statsUnread" class="text-xl font-semibold">0</div>
+          </div>
+          <div class="card p-4">
+            <div class="text-sm text-slate-500">Membership</div>
+            <div id="membershipTier" class="text-xl font-semibold">Free</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Launcher (WASM) -->
+      <section id="launcher" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bx-play-circle'></i> Launcher</h2>
+        <p class="text-slate-600 mb-4">Provide your WASM URLs and optional .wasm/.wasm.gz files below. This stub will load and run them inside a canvas.</p>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <input id="wasmUrl" class="w-full border rounded-xl p-2 ring-focus" placeholder="https://example.com/client.wasm"/>
+            <button id="loadWasmBtn" class="btn btn-primary"><i class='bx bx-rocket'></i> Launch Client</button>
+            <div id="wasmStatus" class="text-sm text-slate-500"></div>
+            <div class="text-xs text-slate-500">Tip: You can predefine multiple clients and list them here as buttons.</div>
+          </div>
+          <div class="p-2 bg-slate-900 rounded-xl">
+            <canvas id="wasmCanvas" class="w-full h-64 bg-black rounded-lg"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section id="chat" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-chat'></i> Chat</h2>
+        <div class="grid lg:grid-cols-4 gap-4">
+          <!-- Channels / Friends -->
+          <div class="lg:col-span-1 card p-3 space-y-2 max-h-96 overflow-auto scroll-area">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">Channels</div>
+              <button id="newChannelBtn" class="btn text-xs">+ New</button>
+            </div>
+            <ul id="channelList" class="space-y-1 text-sm"></ul>
+            <div class="pt-3 border-t"><div class="font-semibold">Direct Messages</div></div>
+            <ul id="dmList" class="space-y-1 text-sm"></ul>
+          </div>
+          <!-- Messages -->
+          <div class="lg:col-span-2 card p-3 flex flex-col max-h-96">
+            <div id="activeTarget" class="text-sm text-slate-500">Select a channel or friend</div>
+            <div id="messageList" class="flex-1 overflow-auto scroll-area space-y-2 mt-2"></div>
+            <div class="flex gap-2 mt-2">
+              <input id="messageInput" class="flex-1 border rounded-xl p-2 ring-focus" placeholder="Type a message..."/>
+              <button id="sendMessageBtn" class="btn btn-primary"><i class='bx bx-send'></i></button>
+            </div>
+          </div>
+          <!-- Voice -->
+          <div class="lg:col-span-1 card p-3 space-y-2">
+            <div class="font-semibold">Voice Call</div>
+            <div class="text-xs text-slate-500">Simple 1:1 WebRTC using Firestore signaling.</div>
+            <input id="callWithUid" class="w-full border rounded-xl p-2 ring-focus" placeholder="Friend UID to call"/>
+            <div class="flex gap-2">
+              <button id="startCallBtn" class="btn"><i class='bx bx-phone'></i> Call</button>
+              <button id="hangupBtn" class="btn"><i class='bx bx-phone-off'></i> Hang up</button>
+            </div>
+            <audio id="remoteAudio" autoplay playsinline class="w-full mt-2"></audio>
+          </div>
+        </div>
+      </section>
+
+      <!-- Friends -->
+      <section id="friends" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-user-plus'></i> Friends</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Send Friend Request</div>
+            <input id="friendEmail" class="w-full border rounded-xl p-2 ring-focus" placeholder="friend@email.com"/>
+            <button id="sendFriendReqBtn" class="btn btn-primary mt-2">Send</button>
+          </div>
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Incoming Requests</div>
+            <ul id="incomingRequests" class="space-y-2 text-sm"></ul>
+          </div>
+        </div>
+        <div class="card p-3 mt-4">
+          <div class="font-semibold mb-2">Your Friends</div>
+          <ul id="friendList" class="grid md:grid-cols-2 gap-2 text-sm"></ul>
+        </div>
+      </section>
+
+      <!-- News -->
+      <section id="news" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-news'></i> News</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="md:col-span-2">
+            <ul id="newsFeed" class="space-y-3"></ul>
+          </div>
+          <div class="card p-3" id="newsEditorWrap" style="display:none;">
+            <div class="font-semibold mb-2">Post News (Admin/Mod)</div>
+            <input id="newsTitle" class="w-full border rounded-xl p-2 ring-focus mb-2" placeholder="Title"/>
+            <textarea id="newsBody" class="w-full border rounded-xl p-2 ring-focus mb-2" rows="4" placeholder="Write update...\nSupports Markdown."></textarea>
+            <button id="postNewsBtn" class="btn btn-primary">Publish</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Store (Ranks & Perks) -->
+      <section id="store" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-cart'></i> Store</h2>
+        <p class="text-slate-600 mb-4">Ranks and perks. Replace pricing / perks as needed.</p>
+        <div class="grid md:grid-cols-4 gap-4" id="ranksGrid">
+          <!-- Cards will be injected -->
+        </div>
+      </section>
+
+      <!-- Downloads -->
+      <section id="downloads" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-download'></i> Downloads</h2>
+        <div class="flex items-center gap-2 mb-3">
+          <input id="uploadFile" type="file" class="border rounded-xl p-2"/>
+          <button id="uploadBtn" class="btn">Upload</button>
+        </div>
+        <ul id="downloadList" class="space-y-2 text-sm"></ul>
+      </section>
+
+      <!-- Profile -->
+      <section id="profile" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-user-circle'></i> Profile</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <input id="displayName" class="w-full border rounded-xl p-2" placeholder="Display name"/>
+            <input id="avatarFile" type="file" class="w-full border rounded-xl p-2"/>
+            <button id="saveProfileBtn" class="btn btn-primary">Save Profile</button>
+          </div>
+          <div class="card p-4 flex items-center gap-3">
+            <img id="previewAvatar" class="h-20 w-20 rounded-full" src="https://placehold.co/128x128"/>
+            <div>
+              <div id="previewName" class="font-semibold">Guest</div>
+              <div id="previewEmail" class="text-sm text-slate-500">Not signed in</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Support -->
+      <section id="support" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-help-circle'></i> Support</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Open Ticket</div>
+            <input id="ticketSubject" class="w-full border rounded-xl p-2 ring-focus mb-2" placeholder="Subject"/>
+            <textarea id="ticketBody" class="w-full border rounded-xl p-2 ring-focus mb-2" rows="4" placeholder="Describe your issue..."></textarea>
+            <button id="openTicketBtn" class="btn btn-primary">Submit</button>
+          </div>
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Your Tickets</div>
+            <ul id="ticketList" class="space-y-2 text-sm"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Forums -->
+      <section id="forums" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-conversation'></i> Forums</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="md:col-span-1 card p-3">
+            <div class="font-semibold mb-2">New Thread</div>
+            <input id="threadTitle" class="w-full border rounded-xl p-2 ring-focus mb-2" placeholder="Thread title"/>
+            <textarea id="threadBody" class="w-full border rounded-xl p-2 ring-focus mb-2" rows="4" placeholder="First post..."></textarea>
+            <button id="postThreadBtn" class="btn btn-primary">Post</button>
+          </div>
+          <div class="md:col-span-2 card p-3">
+            <div class="font-semibold mb-2">Threads</div>
+            <ul id="threadList" class="space-y-2 text-sm"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin / Moderation -->
+      <section id="admin" class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class='bx bxs-shield'></i> Admin / Moderation</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Users</div>
+            <ul id="adminUserList" class="space-y-2 text-sm max-h-80 overflow-auto scroll-area"></ul>
+          </div>
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Reports</div>
+            <ul id="reportList" class="space-y-2 text-sm max-h-80 overflow-auto scroll-area"></ul>
+          </div>
+          <div class="card p-3">
+            <div class="font-semibold mb-2">Post News</div>
+            <input id="adminNewsTitle" class="w-full border rounded-xl p-2 ring-focus mb-2" placeholder="Title"/>
+            <textarea id="adminNewsBody" class="w-full border rounded-xl p-2 ring-focus mb-2" rows="4" placeholder="Write update..."></textarea>
+            <button id="adminPublishNewsBtn" class="btn btn-primary">Publish</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="text-center text-xs text-slate-400 pb-6">© <span id="year"></span> Your Brand</footer>
+    </main>
+  </div>
+<section id="store" class="p-6 bg-gray-900 text-white">
+  <h2 class="text-2xl font-bold mb-6">UEC Store</h2>
+  <div class="grid md:grid-cols-3 gap-6">
+    
+    <!-- VIP -->
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+      <h3 class="text-xl font-semibold">VIP</h3>
+      <p class="text-3xl font-bold">$3.5<span class="text-sm">/month</span></p>
+      <ul class="mt-4 space-y-2 text-sm">
+        <li>✅ 10MB File Upload</li>
+        <li>✅ No Chat Cooldown</li>
+        <li>✅ Custom Chat Color</li>
+        <li>✅ Profile Avatar</li>
+      </ul>
+      <button class="mt-6 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+        Purchase VIP
+      </button>
+    </div>
+    
+    <!-- VIP+ -->
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-yellow-400">
+      <h3 class="text-xl font-semibold flex items-center">
+        VIP+ <span class="ml-2 px-2 py-1 text-xs bg-yellow-400 text-black rounded">POPULAR</span>
+      </h3>
+      <p class="text-3xl font-bold">$6<span class="text-sm">/month</span></p>
+      <ul class="mt-4 space-y-2 text-sm">
+        <li>✅ 15MB File Upload</li>
+        <li>✅ No Chat Cooldown</li>
+        <li>✅ Custom Chat Color</li>
+        <li>✅ Profile Avatar</li>
+        <li>✅ Priority Support</li>
+      </ul>
+      <button class="mt-6 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+        Purchase VIP+
+      </button>
+    </div>
+    
+    <!-- Chatter+ -->
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+      <h3 class="text-xl font-semibold">Chatter+</h3>
+      <p class="text-3xl font-bold">$10<span class="text-sm">/month</span></p>
+      <ul class="mt-4 space-y-2 text-sm">
+        <li>✅ 20MB File Upload</li>
+        <li>✅ No Chat Cooldown</li>
+        <li>✅ Custom Chat Color</li>
+        <li>✅ Profile Avatar</li>
+        <li>✅ Special Badge</li>
+        <li>✅ Early Access</li>
+      </ul>
+      <button class="mt-6 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+        Purchase Chatter+
+      </button>
+    </div>
+    
+  </div>
+  
+  <!-- Payment Methods -->
+  <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+    <h4 class="text-lg font-semibold mb-2">Payment Methods</h4>
+    <div class="flex flex-wrap gap-4 text-sm">
+      <span>💳 Credit/Debit Cards</span>
+      <span>🟠 PayPal</span>
+      <span>₿ Crypto</span>
+      <span>🎮 Steam Wallet</span>
+    </div>
+  </div>
+</section>
